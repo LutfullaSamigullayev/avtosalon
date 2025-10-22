@@ -1,5 +1,822 @@
 openapi: 3.0.3
 info:
-  title: Avto Salon
+  title: Avto Bozor API
   version: 1.0.0
-  description: Mashinalar haqida malumot
+  description: Avtomobil savdo platformasi uchun REST API. Category va Car CRUD operatsiyalari, Auth tizimi, image upload va logger imkoniyatlari mavjud.
+  contact:
+    name: API Support
+    email: support@avtobozor.uz
+servers:
+  - url: http://localhost:4001
+    description: Development server
+
+tags:
+  - name: Auth
+    description: Authentication va user management
+  - name: Profile
+    description: User profile management
+  - name: Category
+    description: Category CRUD operations
+  - name: Car
+    description: Car CRUD operations
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: AccessToken
+  
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+    
+    Category:
+      type: object
+      required:
+        - title
+        - imgUrl
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        title:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Sedan"
+        imgUrl:
+          type: string
+          example: "/images/image-1234567890.jpg"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    Car:
+      type: object
+      required:
+        - category_info
+        - mator
+        - year
+        - color
+        - distance
+        - gearbook
+        - price
+        - imgUrl
+        - description
+        - addedBy
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439012"
+        category_info:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        mator:
+          type: string
+          example: "2.0 TSI"
+        tanirovka:
+          type: boolean
+          default: false
+        year:
+          type: number
+          minimum: 1900
+          example: 2023
+        color:
+          type: string
+          enum: [qora, oq, kulrang, qizil, ko'k, yashil, sariq, jigarrang, pushti, binafsha, boshqa]
+          example: "qora"
+        distance:
+          type: number
+          minimum: 0
+          example: 15000
+        gearbook:
+          type: string
+          enum: [mexanika, avtomat, robot, variator]
+          example: "avtomat"
+        price:
+          type: number
+          minimum: 0
+          example: 45000
+        imgUrl:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 3
+          example: ["/images/car1.jpg", "/images/car2.jpg", "/images/car3.jpg"]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+          example: "2023 yil ishlab chiqarilgan, ideal holatda"
+        addedBy:
+          type: string
+          example: "507f1f77bcf86cd799439013"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, admin, super_admin]
+        isVerified:
+          type: boolean
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phoneNumber:
+          type: string
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Yangi user ro'yxatdan o'tkazish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '201':
+          description: User muvaffaqiyatli ro'yxatdan o'tdi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Validation xatosi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/verify:
+    post:
+      tags:
+        - Auth
+      summary: OTP orqali emailni tasdiqlash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+              properties:
+                email:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: Email muvaffaqiyatli tasdiqlandi
+        '400':
+          description: Noto'g'ri OTP yoki email
+  
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Tizimga kirish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login muvaffaqiyatli
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: AccessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly
+        '401':
+          description: Noto'g'ri email yoki parol
+  
+  /auth/logout:
+    get:
+      tags:
+        - Auth
+      summary: Tizimdan chiqish
+      responses:
+        '200':
+          description: Logout muvaffaqiyatli
+  
+  /auth/forget_password:
+    post:
+      tags:
+        - Auth
+      summary: Parolni unutish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Email yuborildi
+  
+  /auth/reset_password:
+    post:
+      tags:
+        - Auth
+      summary: Yangi parol o'rnatish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - otp
+                - newPassword
+              properties:
+                email:
+                  type: string
+                otp:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Parol muvaffaqiyatli o'zgartirildi
+  
+  /auth/to_admin:
+    put:
+      tags:
+        - Auth
+      summary: Userni adminga aylantirish (faqat super_admin)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: User adminga aylantirildi
+        '401':
+          description: Unauthorized
+        '403':
+          description: Faqat super_admin ruxsat etilgan
+  
+  /auth/refresh:
+    get:
+      tags:
+        - Auth
+      summary: Access tokenni yangilash
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Token yangilandi
+  
+  /profile/get_profile:
+    get:
+      tags:
+        - Profile
+      summary: Profilni olish
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Profil ma'lumotlari
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+  
+  /profile/edit_profile:
+    put:
+      tags:
+        - Profile
+      summary: Profilni tahrirlash
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phoneNumber:
+                  type: string
+      responses:
+        '200':
+          description: Profil muvaffaqiyatli yangilandi
+        '401':
+          description: Unauthorized
+  
+  /profile/edit_password:
+    put:
+      tags:
+        - Profile
+      summary: Parolni o'zgartirish
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Parol muvaffaqiyatli o'zgartirildi
+        '401':
+          description: Unauthorized
+  
+  /category:
+    get:
+      tags:
+        - Category
+      summary: Barcha categorylarni olish (Public)
+      responses:
+        '200':
+          description: Barcha categorylar ro'yxati
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: number
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+    
+    post:
+      tags:
+        - Category
+      summary: Yangi category yaratish (Admin only)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - image
+              properties:
+                title:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                image:
+                  type: string
+                  format: binary
+                  description: Rasm fayli (max 5MB, jpeg/jpg/png/webp)
+      responses:
+        '201':
+          description: Category muvaffaqiyatli yaratildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '400':
+          description: Validation xatosi
+        '401':
+          description: Unauthorized
+  
+  /category/{id}:
+    get:
+      tags:
+        - Category
+      summary: Bitta categoryni olish (Public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        '200':
+          description: Category topildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Category'
+        '404':
+          description: Category topilmadi
+    
+    put:
+      tags:
+        - Category
+      summary: Categoryni yangilash (Admin only)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Category muvaffaqiyatli yangilandi
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category topilmadi
+    
+    delete:
+      tags:
+        - Category
+      summary: Categoryni o'chirish - Cascade delete (Admin only)
+      description: Category o'chirilganda unga tegishli barcha mashinalar ham o'chiriladi
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category va tegishli mashinalar o'chirildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  deletedCarsCount:
+                    type: number
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category topilmadi
+  
+  /car:
+    get:
+      tags:
+        - Car
+      summary: Barcha mashinalarni olish (Public)
+      description: Category va addedBy ma'lumotlari populate qilinadi
+      responses:
+        '200':
+          description: Barcha mashinalar ro'yxati
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: number
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Car'
+    
+    post:
+      tags:
+        - Car
+      summary: Yangi mashina yaratish (Admin only)
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - category_info
+                - mator
+                - year
+                - color
+                - distance
+                - gearbook
+                - price
+                - description
+                - images
+              properties:
+                category_info:
+                  type: string
+                  description: Category ID
+                mator:
+                  type: string
+                  example: "2.0 TSI"
+                tanirovka:
+                  type: boolean
+                  default: false
+                year:
+                  type: number
+                  example: 2023
+                color:
+                  type: string
+                  enum: [qora, oq, kulrang, qizil, ko'k, yashil, sariq, jigarrang, pushti, binafsha, boshqa]
+                distance:
+                  type: number
+                  example: 15000
+                gearbook:
+                  type: string
+                  enum: [mexanika, avtomat, robot, variator]
+                price:
+                  type: number
+                  example: 45000
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 3
+                  description: 1-3 ta rasm (har biri max 5MB)
+      responses:
+        '201':
+          description: Mashina muvaffaqiyatli yaratildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Car'
+        '400':
+          description: Validation xatosi
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category topilmadi
+  
+  /car/{id}:
+    get:
+      tags:
+        - Car
+      summary: Bitta mashinani olish (Public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mashina topildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Car'
+        '404':
+          description: Mashina topilmadi
+    
+    put:
+      tags:
+        - Car
+      summary: Mashinani yangilash (Admin only)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                category_info:
+                  type: string
+                mator:
+                  type: string
+                tanirovka:
+                  type: boolean
+                year:
+                  type: number
+                color:
+                  type: string
+                distance:
+                  type: number
+                gearbook:
+                  type: string
+                price:
+                  type: number
+                description:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Mashina muvaffaqiyatli yangilandi
+        '401':
+          description: Unauthorized
+        '404':
+          description: Mashina topilmadi
+    
+    delete:
+      tags:
+        - Car
+      summary: Mashinani o'chirish (Admin only)
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mashina muvaffaqiyatli o'chirildi
+        '401':
+          description: Unauthorized
+        '404':
+          description: Mashina topilmadi
+  
+  /car/by-category/{categoryId}:
+    get:
+      tags:
+        - Car
+      summary: Category bo'yicha mashinalar (Public, Pagination)
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Sahifa raqami
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Sahifadagi elementlar soni
+      responses:
+        '200':
+          description: Category bo'yicha mashinalar
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  category:
+                    type: string
+                  pagination:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: number
+                      totalPages:
+                        type: number
+                      totalCars:
+                        type: number
+                      limit:
+                        type: number
+                      hasNextPage:
+                        type: boolean
+                      hasPrevPage:
+                        type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Car'
+        '404':
+          description: Category topilmadi

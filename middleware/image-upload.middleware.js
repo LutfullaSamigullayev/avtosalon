@@ -51,8 +51,8 @@ const upload = multer({
 // Bitta rasm yuklash (category uchun)
 const uploadSingle = upload.single("image");
 
-// Ko'p rasmlar yuklash (car uchun, max 10 ta)
-const uploadMultiple = upload.array("images", 10);
+// Ko'p rasmlar yuklash (car uchun, max 3 ta)
+const uploadMultiple = upload.array("images", 3);
 
 // Xatoliklarni boshqarish uchun wrapper
 const handleUploadError = (uploadFunction) => {
@@ -66,7 +66,7 @@ const handleUploadError = (uploadFunction) => {
         }
         if (err.code === "LIMIT_FILE_COUNT") {
           return next(
-            CustomErrorHandler.BadRequest("Ko'pi bilan 10 ta rasm yuklash mumkin")
+            CustomErrorHandler.BadRequest("Ko'pi bilan 3 ta rasm yuklash mumkin")
           );
         }
         if (err.code === "LIMIT_UNEXPECTED_FILE") {

@@ -16,7 +16,7 @@ const CategoryRouter = require("./router/category.router");
 const CarRouter = require("./router/car.router");
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 4001
 app.use(cors())
 app.use(express.json())
 app.use(cookieParser())
@@ -34,10 +34,10 @@ connectDB()
 app.use('/images', express.static('./upload/images')) 
 
 // router
-app.use("/api/auth", AuthRouter);
-app.use("/api/profile", ProfileRouter);
-app.use("/api/category", CategoryRouter);
-app.use("/api/car", CarRouter);
+app.use("/auth", AuthRouter);
+app.use("/profile", ProfileRouter);
+app.use("/category", CategoryRouter);
+app.use("/car", CarRouter);
 
 // custom error
 app.use(errorMiddleware)

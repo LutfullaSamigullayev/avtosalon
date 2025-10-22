@@ -47,9 +47,9 @@ const CarSchema = new Schema(
       required: true,
       validate: {
         validator: function (v) {
-          return v.length > 0 && v.length <= 10;
+          return v.length > 0 && v.length <= 3;
         },
-        message: "Kamida 1 ta va ko'pi bilan 10 ta rasm yuklash mumkin",
+        message: "Kamida 1 ta va ko'pi bilan 3 ta rasm yuklash mumkin",
       },
     },
     description: {
