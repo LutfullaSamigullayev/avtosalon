@@ -1,4 +1,5 @@
 openapi: 3.0.3
 info:
-  title: Avtosalon
+  title: Avto Salon
   version: 1.0.0
+  description: Mashinalar haqida malumot

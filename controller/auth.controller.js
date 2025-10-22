@@ -272,6 +272,6 @@ module.exports = {
   forgetPassword,
   resetPassword,
   toAdmin,
-  handleRefreshToken ,
+  handleRefreshToken,
   logout,
 };

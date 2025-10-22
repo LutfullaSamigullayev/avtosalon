@@ -12,8 +12,8 @@ module.exports = async function(email, otp) {
         await transport.sendMail({
             from: "samigullayevlutfulla@gmail.com",
             to:email,
-            subject: "DevBook",
-            text: "Verification code from devbook",
+            subject: "Avto Salon",
+            text: "Verification code from Avto Salon",
             html: `<p style="font-size: 24px">Verify code: <strong style="color: green">${otp}</strong></p>`
         })
     } catch (error) {

@@ -7,6 +7,7 @@ const {
   editPassword,
 } = require("../controller/profile.controller");
 const profileValidatorMiddleware = require("../middleware/profile.validator.middleware");
+const adminLogger = require("../utils/adminLogger");
 
 const ProfileRouter = Router();
 
@@ -15,12 +16,14 @@ ProfileRouter.put(
   "/edit_profile",
   profileValidatorMiddleware("profile"),
   authorizationMiddleware,
+  adminLogger,
   editProfile
 );
 ProfileRouter.put(
   "/edit_password",
   profileValidatorMiddleware("password"),
   authorizationMiddleware,
+  adminLogger,
   editPassword
 );
 

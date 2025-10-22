@@ -6,16 +6,14 @@ const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express")
 const YAML = require("yamljs");
 
-// router imports
+// custom error
 const errorMiddleware = require("./middleware/error.middleware");
-const AuthorRouter = require("./router/author.router");
-const BookRouter = require("./router/book.router");
-const CitationRouter = require("./router/citation.router");
+
+// router imports
 const AuthRouter = require("./router/auth.router");
 const ProfileRouter = require("./router/profile.router");
-const PaperRouter = require("./router/paper.router");
-const AudioRouter = require("./router/audio.router");
-const EBookRouter = require("./router/ebook.router");
+const CategoryRouter = require("./router/category.router");
+const CarRouter = require("./router/car.router");
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -33,17 +31,13 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 connectDB()
 
 // image
-app.use('/files', express.static('./upload/files')) 
+app.use('/images', express.static('./upload/images')) 
 
 // router
-app.use(AuthorRouter)
-app.use(BookRouter)
-app.use(CitationRouter)
-app.use(AuthRouter)
-app.use(ProfileRouter)
-app.use(PaperRouter)
-app.use(AudioRouter)
-app.use(EBookRouter)
+app.use("/api/auth", AuthRouter);
+app.use("/api/profile", ProfileRouter);
+app.use("/api/category", CategoryRouter);
+app.use("/api/car", CarRouter);
 
 // custom error
 app.use(errorMiddleware)
