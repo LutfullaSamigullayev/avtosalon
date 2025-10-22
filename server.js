@@ -11,7 +11,6 @@ const errorMiddleware = require("./middleware/error.middleware");
 
 // router imports
 const AuthRouter = require("./router/auth.router");
-const ProfileRouter = require("./router/profile.router");
 const CategoryRouter = require("./router/category.router");
 const CarRouter = require("./router/car.router");
 
@@ -35,7 +34,6 @@ app.use('/images', express.static('./upload/images'))
 
 // router
 app.use("/auth", AuthRouter);
-app.use("/profile", ProfileRouter);
 app.use("/category", CategoryRouter);
 app.use("/car", CarRouter);
 

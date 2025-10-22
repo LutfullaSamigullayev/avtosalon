@@ -91,6 +91,23 @@ const carController = {
     }
   },
 
+  // Get my cars - faqat admin o'z carlarini ko'radi
+  async getMyCars(req, res, next) {
+    try {
+      const cars = await Car.find({ addedBy: req.user._id })
+        .populate("category_info", "title imgUrl")
+        .sort({ createdAt: -1 });
+
+      res.status(200).json({
+        message: "Mening mashinalarim",
+        count: cars.length,
+        data: cars,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Read by category with pagination - barcha userlar ko'ra oladi
   async getByCategory(req, res, next) {
     try {
@@ -176,6 +193,20 @@ const carController = {
         throw CustomErrorHandler.NotFound("Mashina topilmadi");
       }
 
+      // Ownership tekshiruvi - faqat o'z carini update qila oladi
+      if (car.addedBy.toString() !== req.user._id.toString()) {
+        // Agar yangi rasmlar yuklangan bo'lsa, ularni o'chirish
+        if (req.files && req.files.length > 0) {
+          req.files.forEach((file) => {
+            const filePath = path.join(__dirname, "../upload/images", file.filename);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+            }
+          });
+        }
+        throw CustomErrorHandler.Forbidden("Siz faqat o'zingiz qo'shgan mashinalarni o'zgartira olasiz");
+      }
+
       // Agar category_info o'zgartirilayotgan bo'lsa, yangi category mavjudligini tekshirish
       if (category_info && category_info !== car.category_info.toString()) {
         const category = await Category.findById(category_info);
@@ -253,6 +284,11 @@ const carController = {
 
       if (!car) {
         throw CustomErrorHandler.NotFound("Mashina topilmadi");
+      }
+
+      // Ownership tekshiruvi - faqat o'z carini delete qila oladi
+      if (car.addedBy.toString() !== req.user._id.toString()) {
+        throw CustomErrorHandler.Forbidden("Siz faqat o'zingiz qo'shgan mashinalarni o'chira olasiz");
       }
 
       // Rasmlarni o'chirish

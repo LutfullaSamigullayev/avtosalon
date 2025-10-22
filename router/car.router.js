@@ -10,9 +10,13 @@ const objectIdValidator = require("../middleware/objectId.validator.middleware")
 // Public routes - barcha userlar uchun
 router.get("/", carController.getAll);
 router.get("/by-category/:categoryId", objectIdValidator, carController.getByCategory);
-router.get("/:id", objectIdValidator, carController.getById);
 
 // Protected routes - faqat admin uchun
+// Admin o'z carlarini ko'rish (/:id dan oldin bo'lishi kerak)
+router.get("/my-cars", authorization, adminChecker, carController.getMyCars);
+
+// Public route - bitta car
+router.get("/:id", objectIdValidator, carController.getById);
 router.post(
   "/",
   authorization,
