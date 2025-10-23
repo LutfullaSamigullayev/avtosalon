@@ -1,47 +1,57 @@
-const express = require("express");
-const router = express.Router();
-const carController = require("../controller/car.controller");
-const carValidator = require("../validator/car.validator");
+const { Router } = require("express");
+const {
+  create,
+  getAll,
+  getMyCars,
+  getByCategory,
+  getById,
+  update,
+  delete: deleteCar,
+} = require("../controller/car.controller");
+const carValidatorMiddleware = require("../middleware/car.validator.middleware");
 const { uploadMultipleImages } = require("../middleware/image-upload.middleware");
-const authorization = require("../middleware/authorization.middleware");
-const adminChecker = require("../middleware/admin-super_admin.chesker.middleware");
-const objectIdValidator = require("../middleware/objectId.validator.middleware");
+const authorizationMiddleware = require("../middleware/authorization.middleware");
+const adminCheckerMiddleware = require("../middleware/admin-super_admin.chesker.middleware");
+const objectIdValidatorMiddleware = require("../middleware/objectId.validator.middleware");
+
+const router = Router();
 
 // Public routes - barcha userlar uchun
-router.get("/", carController.getAll);
-router.get("/by-category/:categoryId", objectIdValidator, carController.getByCategory);
+router.get("/car", getAll);
+router.get("/car/by-category/:categoryId", objectIdValidatorMiddleware, getByCategory);
 
 // Protected routes - faqat admin uchun
 // Admin o'z carlarini ko'rish (/:id dan oldin bo'lishi kerak)
-router.get("/my-cars", authorization, adminChecker, carController.getMyCars);
+router.get("/car/my-cars", authorizationMiddleware, adminCheckerMiddleware, getMyCars);
 
 // Public route - bitta car
-router.get("/:id", objectIdValidator, carController.getById);
+router.get("/car/:id", objectIdValidatorMiddleware, getById);
+
 router.post(
-  "/",
-  authorization,
-  adminChecker,
+  "/car",
+  authorizationMiddleware,
+  adminCheckerMiddleware,
   uploadMultipleImages,
-  carValidator,
-  carController.create
+  carValidatorMiddleware,
+  create
 );
 
 router.put(
-  "/:id",
-  authorization,
-  adminChecker,
-  objectIdValidator,
+  "/car/:id",
+  authorizationMiddleware,
+  adminCheckerMiddleware,
+  objectIdValidatorMiddleware,
   uploadMultipleImages,
-  carValidator,
-  carController.update
+  carValidatorMiddleware,
+  update
 );
 
 router.delete(
-  "/:id",
-  authorization,
-  adminChecker,
-  objectIdValidator,
-  carController.delete
+  "/car/:id",
+  authorizationMiddleware,
+  adminCheckerMiddleware,
+  objectIdValidatorMiddleware,
+  deleteCar
 );
 
 module.exports = router;

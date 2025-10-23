@@ -265,6 +265,49 @@ const logout = async (req, res, next) => {
   }
 };
 
+const editProfile = async (req, res, next) => {
+  try {
+    const { username, imgUrl } = req.body;
+    const userId = req.user._id;
+
+    const foundedUser = await AuthSchema.findById(userId);
+    if (!foundedUser) {
+      throw CustomErrorHandler.NotFound("Foydalanuvchi topilmadi!");
+    }
+
+    // Username o'zgartirilayotgan bo'lsa, uniqueness tekshirish
+    if (username && username !== foundedUser.username) {
+      const existingUser = await AuthSchema.findOne({ username });
+      if (existingUser) {
+        throw CustomErrorHandler.UnAuthorized(
+          "Bu username bilan foydalanuvchi mavjud!"
+        );
+      }
+      foundedUser.username = username;
+    }
+
+    // ImgUrl o'zgartirilayotgan bo'lsa
+    if (imgUrl !== undefined) {
+      foundedUser.imgUrl = imgUrl || "https://picsum.photos/200";
+    }
+
+    await foundedUser.save();
+
+    res.status(200).json({
+      message: "Profil muvaffaqiyatli yangilandi!",
+      data: {
+        _id: foundedUser._id,
+        username: foundedUser.username,
+        email: foundedUser.email,
+        imgUrl: foundedUser.imgUrl,
+        role: foundedUser.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   verify,
@@ -274,4 +317,5 @@ module.exports = {
   toAdmin,
   handleRefreshToken,
   logout,
+  editProfile,
 };

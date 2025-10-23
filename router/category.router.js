@@ -1,42 +1,51 @@
-const express = require("express");
-const router = express.Router();
-const categoryController = require("../controller/category.controller");
-const categoryValidator = require("../validator/category.validator");
+const { Router } = require("express");
+const {
+  create,
+  getAll,
+  getById,
+  update,
+  delete: deleteCategory,
+} = require("../controller/category.controller");
+const categoryValidatorMiddleware = require("../middleware/category.validator.middleware");
 const { uploadSingleImage } = require("../middleware/image-upload.middleware");
-const authorization = require("../middleware/authorization.middleware");
-const adminChecker = require("../middleware/admin-super_admin.chesker.middleware");
-const objectIdValidator = require("../middleware/objectId.validator.middleware");
+const authorizationMiddleware = require("../middleware/authorization.middleware");
+const adminCheckerMiddleware = require("../middleware/admin-super_admin.chesker.middleware");
+const superAdminCheckerMiddleware = require("../middleware/super_admin.chesker.middleware");
+const objectIdValidatorMiddleware = require("../middleware/objectId.validator.middleware");
+
+const router = Router();
 
 // Public routes - barcha userlar uchun
-router.get("/", categoryController.getAll);
-router.get("/:id", objectIdValidator, categoryController.getById);
+router.get("/category", getAll);
+router.get("/category/:id", objectIdValidatorMiddleware, getById);
 
 // Protected routes - faqat admin uchun
 router.post(
-  "/",
-  authorization,
-  adminChecker,
+  "/category",
+  authorizationMiddleware,
+  adminCheckerMiddleware,
   uploadSingleImage,
-  categoryValidator,
-  categoryController.create
+  categoryValidatorMiddleware,
+  create
 );
 
+// Update va Delete - faqat super_admin
 router.put(
-  "/:id",
-  authorization,
-  adminChecker,
-  objectIdValidator,
+  "/category/:id",
+  authorizationMiddleware,
+  superAdminCheckerMiddleware,
+  objectIdValidatorMiddleware,
   uploadSingleImage,
-  categoryValidator,
-  categoryController.update
+  categoryValidatorMiddleware,
+  update
 );
 
 router.delete(
-  "/:id",
-  authorization,
-  adminChecker,
-  objectIdValidator,
-  categoryController.delete
+  "/category/:id",
+  authorizationMiddleware,
+  superAdminCheckerMiddleware,
+  objectIdValidatorMiddleware,
+  deleteCategory
 );
 
 module.exports = router;

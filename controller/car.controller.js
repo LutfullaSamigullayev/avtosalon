@@ -5,9 +5,8 @@ const { infoLogger } = require("../config/app-logger");
 const fs = require("fs");
 const path = require("path");
 
-const carController = {
-  // Create - faqat admin
-  async create(req, res, next) {
+// Create - faqat admin
+const create = async (req, res, next) => {
     try {
       const { category_info, mator, tanirovka, year, color, distance, gearbook, price, description } = req.body;
 
@@ -71,10 +70,10 @@ const carController = {
       }
       next(error);
     }
-  },
+};
 
-  // Read all - barcha userlar ko'ra oladi
-  async getAll(req, res, next) {
+// Read all - barcha userlar ko'ra oladi
+const getAll = async (req, res, next) => {
     try {
       const cars = await Car.find()
         .populate("category_info", "title imgUrl")
@@ -89,10 +88,10 @@ const carController = {
     } catch (error) {
       next(error);
     }
-  },
+};
 
-  // Get my cars - faqat admin o'z carlarini ko'radi
-  async getMyCars(req, res, next) {
+// Get my cars - faqat admin o'z carlarini ko'radi
+const getMyCars = async (req, res, next) => {
     try {
       const cars = await Car.find({ addedBy: req.user._id })
         .populate("category_info", "title imgUrl")
@@ -106,10 +105,10 @@ const carController = {
     } catch (error) {
       next(error);
     }
-  },
+};
 
-  // Read by category with pagination - barcha userlar ko'ra oladi
-  async getByCategory(req, res, next) {
+// Read by category with pagination - barcha userlar ko'ra oladi
+const getByCategory = async (req, res, next) => {
     try {
       const { categoryId } = req.params;
       const page = parseInt(req.query.page) || 1;
@@ -148,16 +147,16 @@ const carController = {
     } catch (error) {
       next(error);
     }
-  },
+};
 
-  // Read one by ID - barcha userlar ko'ra oladi
-  async getById(req, res, next) {
+// Read one by ID - barcha userlar ko'ra oladi
+const getById = async (req, res, next) => {
     try {
       const { id } = req.params;
 
       const car = await Car.findById(id)
         .populate("category_info", "title imgUrl")
-        .populate("addedBy", "username email firstName lastName phoneNumber");
+        .populate("addedBy", "username email imgUrl");
 
       if (!car) {
         throw CustomErrorHandler.NotFound("Mashina topilmadi");
@@ -170,10 +169,10 @@ const carController = {
     } catch (error) {
       next(error);
     }
-  },
+};
 
-  // Update - faqat admin
-  async update(req, res, next) {
+// Update - faqat admin
+const update = async (req, res, next) => {
     try {
       const { id } = req.params;
       const { category_info, mator, tanirovka, year, color, distance, gearbook, price, description } = req.body;
@@ -273,10 +272,10 @@ const carController = {
       }
       next(error);
     }
-  },
+};
 
-  // Delete - faqat admin
-  async delete(req, res, next) {
+// Delete - faqat admin
+const deleteCar = async (req, res, next) => {
     try {
       const { id } = req.params;
 
@@ -314,7 +313,14 @@ const carController = {
     } catch (error) {
       next(error);
     }
-  },
 };
 
-module.exports = carController;
+module.exports = {
+  create,
+  getAll,
+  getMyCars,
+  getByCategory,
+  getById,
+  update,
+  delete: deleteCar,
+};

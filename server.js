@@ -10,9 +10,9 @@ const YAML = require("yamljs");
 const errorMiddleware = require("./middleware/error.middleware");
 
 // router imports
-const AuthRouter = require("./router/auth.router");
-const CategoryRouter = require("./router/category.router");
-const CarRouter = require("./router/car.router");
+const authRouter = require("./router/auth.router");
+const categoryRouter = require("./router/category.router");
+const carRouter = require("./router/car.router");
 
 const app = express()
 const PORT = process.env.PORT || 4001
@@ -33,9 +33,9 @@ connectDB()
 app.use('/images', express.static('./upload/images')) 
 
 // router
-app.use("/auth", AuthRouter);
-app.use("/category", CategoryRouter);
-app.use("/car", CarRouter);
+app.use(authRouter);
+app.use(categoryRouter);
+app.use(carRouter);
 
 // custom error
 app.use(errorMiddleware)

@@ -74,9 +74,25 @@ const resetPasswordValidator = (data) => {
   return schema.validate(data, { abortEarly: false });
 };
 
+// 🔹 Edit profile uchun validator
+const editProfileValidator = (data) => {
+  const schema = Joi.object({
+    username: Joi.string().min(3).max(30).trim().messages({
+      "string.base": "Username matn bo'lishi kerak!",
+      "string.min": "Username eng kamida 3 ta belgidan iborat bo'lishi kerak!",
+      "string.max": "Username eng ko'pi bilan 30 ta belgidan iborat bo'lishi kerak!",
+    }),
+    imgUrl: Joi.string().allow("", null).messages({
+      "string.base": "ImgUrl matn bo'lishi kerak!",
+    }),
+  });
+  return schema.validate(data, { abortEarly: false });
+};
+
 module.exports = {
   registerValidator,
   loginValidator,
   forgetPasswordValidator,
   resetPasswordValidator,
+  editProfileValidator,
 };

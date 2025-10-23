@@ -8,35 +8,42 @@ const {
   forgetPassword,
   resetPassword,
   handleRefreshToken,
+  editProfile,
 } = require("../controller/auth.controller");
 const authValidatorMiddleware = require("../middleware/auth.validator.middleware");
 const authorizationMiddleware = require("../middleware/authorization.middleware");
 const super_adminCheskerMiddleware = require("../middleware/super_admin.chesker.middleware");
 const refreshTokenMiddleware = require("../middleware/refresh.token.middleware");
 
-const AuthRouter = Router();
+const router = Router();
 
 // Auth endpoints
-AuthRouter.post("/register", authValidatorMiddleware("register"), register);
-AuthRouter.post("/verify", verify);
-AuthRouter.post("/login", authValidatorMiddleware("login"), login);
-AuthRouter.post(
-  "/forget_password",
+router.post("/auth/register", authValidatorMiddleware("register"), register);
+router.post("/auth/verify", verify);
+router.post("/auth/login", authValidatorMiddleware("login"), login);
+router.post(
+  "/auth/forget_password",
   authValidatorMiddleware("forget"),
   forgetPassword
 );
-AuthRouter.post(
-  "/reset_password",
+router.post(
+  "/auth/reset_password",
   authValidatorMiddleware("reset"),
   resetPassword
 );
-AuthRouter.put(
-  "/to_admin",
+router.put(
+  "/auth/to_admin",
   authorizationMiddleware,
   super_adminCheskerMiddleware,
   toAdmin
 );
-AuthRouter.get("/refresh", refreshTokenMiddleware, handleRefreshToken );
-AuthRouter.get("/logout", logout);
+router.get("/auth/refresh", refreshTokenMiddleware, handleRefreshToken );
+router.get("/auth/logout", logout);
+router.put(
+  "/auth/edit_profile",
+  authorizationMiddleware,
+  authValidatorMiddleware("editProfile"),
+  editProfile
+);
 
-module.exports = AuthRouter;
+module.exports = router;

@@ -4,6 +4,7 @@ const {
   loginValidator,
   forgetPasswordValidator,
   resetPasswordValidator,
+  editProfileValidator,
 } = require("../validator/auth.validator");
 
 const authValidatorMiddleware = (type) => {
@@ -23,6 +24,9 @@ const authValidatorMiddleware = (type) => {
           break;
         case "reset":
           validator = resetPasswordValidator;
+          break;
+        case "editProfile":
+          validator = editProfileValidator;
           break;
         default:
           throw new Error("Validator turi noto‘g‘ri belgilangan!");
