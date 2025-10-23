@@ -13,8 +13,6 @@ servers:
 tags:
   - name: Auth
     description: Authentication va user management
-  - name: Profile
-    description: User profile management
   - name: Category
     description: Category CRUD operations
   - name: Car
@@ -137,19 +135,19 @@ components:
           type: string
         username:
           type: string
+          minLength: 3
+          maxLength: 30
         email:
           type: string
+          format: email
         role:
           type: string
           enum: [user, admin, super_admin]
         isVerified:
           type: boolean
-        firstName:
+        imgUrl:
           type: string
-        lastName:
-          type: string
-        phoneNumber:
-          type: string
+          example: "https://picsum.photos/200"
 
 paths:
   /auth/register:
@@ -157,6 +155,7 @@ paths:
       tags:
         - Auth
       summary: Yangi user ro'yxatdan o'tkazish
+      description: Ro'yxatdan o'tgandan keyin emailga OTP yuboriladi. Emailni tasdiqlash uchun /auth/verify endpointidan foydalaning
       requestBody:
         required: true
         content:
@@ -172,15 +171,20 @@ paths:
                   type: string
                   minLength: 3
                   maxLength: 30
+                  example: "john_doe"
                 email:
                   type: string
                   format: email
+                  example: "john@example.com"
                 password:
                   type: string
                   minLength: 6
+                  pattern: '^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{6,}$'
+                  description: Kamida 6 belgili, kamida 1 katta harf, 1 kichik harf va 1 raqam
+                  example: "Password123"
       responses:
         '201':
-          description: User muvaffaqiyatli ro'yxatdan o'tdi
+          description: User muvaffaqiyatli ro'yxatdan o'tdi va emailga OTP yuborildi
           content:
             application/json:
               schema:
@@ -188,8 +192,9 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Registered"
         '400':
-          description: Validation xatosi
+          description: Validation xatosi yoki username/email band
           content:
             application/json:
               schema:
@@ -200,6 +205,7 @@ paths:
       tags:
         - Auth
       summary: OTP orqali emailni tasdiqlash
+      description: Email tasdiqlangandan keyin AccessToken va RefreshToken cookie'da qaytariladi
       requestBody:
         required: true
         content:
@@ -212,11 +218,28 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
                 otp:
                   type: string
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
       responses:
-        '200':
-          description: Email muvaffaqiyatli tasdiqlandi
+        '201':
+          description: Email muvaffaqiyatli tasdiqlandi va login qilindi
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: AccessToken=...; RefreshToken=...
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  access:
+                    type: string
         '400':
           description: Noto'g'ri OTP yoki email
   
@@ -225,6 +248,7 @@ paths:
       tags:
         - Auth
       summary: Tizimga kirish
+      description: Email tasdiqlangan userlar tizimga kirishi mumkin. AccessToken va RefreshToken cookie'da qaytariladi
       requestBody:
         required: true
         content:
@@ -237,8 +261,12 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
+                  example: "john@example.com"
                 password:
                   type: string
+                  minLength: 6
+                  example: "Password123"
       responses:
         '200':
           description: Login muvaffaqiyatli
@@ -246,24 +274,42 @@ paths:
             Set-Cookie:
               schema:
                 type: string
-                example: AccessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly
+                example: AccessToken=...; RefreshToken=...
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  access:
+                    type: string
         '401':
-          description: Noto'g'ri email yoki parol
+          description: Noto'g'ri email/parol yoki email tasdiqlanmagan
   
   /auth/logout:
     get:
       tags:
         - Auth
       summary: Tizimdan chiqish
+      description: AccessToken va RefreshToken cookie'larni o'chiradi
       responses:
         '200':
           description: Logout muvaffaqiyatli
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
   
   /auth/forget_password:
     post:
       tags:
         - Auth
       summary: Parolni unutish
+      description: Emailga parolni tiklash uchun OTP yuboriladi
       requestBody:
         required: true
         content:
@@ -275,15 +321,27 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
+                  example: "john@example.com"
       responses:
-        '200':
-          description: Email yuborildi
+        '201':
+          description: Tasdiqlash kodi emailga yuborildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Bu email bilan foydalanuvchi mavjud emas
   
   /auth/reset_password:
     post:
       tags:
         - Auth
       summary: Yangi parol o'rnatish
+      description: Parol tiklash va login qilish. AccessToken va RefreshToken cookie'da qaytariladi
       requestBody:
         required: true
         content:
@@ -293,17 +351,42 @@ paths:
               required:
                 - email
                 - otp
-                - newPassword
+                - new_password
+                - repeat_password
               properties:
                 email:
                   type: string
+                  format: email
                 otp:
                   type: string
-                newPassword:
+                  pattern: '^[0-9]{6}$'
+                  example: "123456"
+                new_password:
                   type: string
+                  minLength: 6
+                  pattern: '^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{6,}$'
+                  description: Kamida 1 katta harf, 1 kichik harf va 1 raqam
+                repeat_password:
+                  type: string
+                  description: new_password bilan bir xil bo'lishi kerak
       responses:
-        '200':
-          description: Parol muvaffaqiyatli o'zgartirildi
+        '201':
+          description: Parol muvaffaqiyatli o'zgartirildi va login qilindi
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  access:
+                    type: string
+        '400':
+          description: Noto'g'ri OTP yoki validation xatosi
   
   /auth/to_admin:
     put:
@@ -319,51 +402,62 @@ paths:
             schema:
               type: object
               required:
-                - userId
+                - email
               properties:
-                userId:
+                email:
                   type: string
+                  format: email
+                  description: Admin qilmoqchi bo'lgan user emaili
       responses:
-        '200':
+        '201':
           description: User adminga aylantirildi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         '401':
           description: Unauthorized
         '403':
           description: Faqat super_admin ruxsat etilgan
+        '404':
+          description: User topilmadi
   
   /auth/refresh:
     get:
       tags:
         - Auth
       summary: Access tokenni yangilash
+      description: RefreshToken orqali yangi AccessToken olish
       security:
         - cookieAuth: []
       responses:
-        '200':
+        '201':
           description: Token yangilandi
-  
-  /profile/get_profile:
-    get:
-      tags:
-        - Profile
-      summary: Profilni olish
-      security:
-        - cookieAuth: []
-      responses:
-        '200':
-          description: Profil ma'lumotlari
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
         '401':
-          description: Unauthorized
+          description: Unauthorized - RefreshToken yaroqsiz
   
-  /profile/edit_profile:
+  /auth/edit_profile:
     put:
       tags:
-        - Profile
+        - Auth
       summary: Profilni tahrirlash
+      description: Username va imgUrl ni o'zgartirish
       security:
         - cookieAuth: []
       requestBody:
@@ -375,44 +469,41 @@ paths:
               properties:
                 username:
                   type: string
-                firstName:
+                  minLength: 3
+                  maxLength: 30
+                  description: Yangi username (unique bo'lishi kerak)
+                imgUrl:
                   type: string
-                lastName:
-                  type: string
-                phoneNumber:
-                  type: string
+                  description: Profil rasmi URL'i (null yoki bo'sh bo'lsa default rasm)
       responses:
         '200':
           description: Profil muvaffaqiyatli yangilandi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      username:
+                        type: string
+                      email:
+                        type: string
+                      imgUrl:
+                        type: string
+                      role:
+                        type: string
+        '400':
+          description: Username allaqachon band
         '401':
           description: Unauthorized
-  
-  /profile/edit_password:
-    put:
-      tags:
-        - Profile
-      summary: Parolni o'zgartirish
-      security:
-        - cookieAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - oldPassword
-                - newPassword
-              properties:
-                oldPassword:
-                  type: string
-                newPassword:
-                  type: string
-      responses:
-        '200':
-          description: Parol muvaffaqiyatli o'zgartirildi
-        '401':
-          description: Unauthorized
+        '404':
+          description: Foydalanuvchi topilmadi
   
   /category:
     get:
@@ -596,7 +687,7 @@ paths:
     post:
       tags:
         - Car
-      summary: Yangi mashina yaratish (Admin only)
+      summary: Yangi mashina yaratish (Admin va Super_admin)
       security:
         - cookieAuth: []
       requestBody:
@@ -700,7 +791,8 @@ paths:
     put:
       tags:
         - Car
-      summary: Mashinani yangilash (Admin only)
+      summary: Mashinani yangilash (Faqat o'z carini)
+      description: Admin faqat o'zi qo'shgan mashinalarni yangilashi mumkin (ownership check)
       security:
         - cookieAuth: []
       parameters:
@@ -744,13 +836,16 @@ paths:
           description: Mashina muvaffaqiyatli yangilandi
         '401':
           description: Unauthorized
+        '403':
+          description: Faqat o'z qo'shgan mashinalaringizni yangilashingiz mumkin
         '404':
           description: Mashina topilmadi
     
     delete:
       tags:
         - Car
-      summary: Mashinani o'chirish (Admin only)
+      summary: Mashinani o'chirish (Faqat o'z carini)
+      description: Admin faqat o'zi qo'shgan mashinalarni o'chirishi mumkin (ownership check)
       security:
         - cookieAuth: []
       parameters:
@@ -764,8 +859,39 @@ paths:
           description: Mashina muvaffaqiyatli o'chirildi
         '401':
           description: Unauthorized
+        '403':
+          description: Faqat o'z qo'shgan mashinalaringizni o'chirishingiz mumkin
         '404':
           description: Mashina topilmadi
+  
+  /car/my-cars:
+    get:
+      tags:
+        - Car
+      summary: Mening mashinalarim (Admin/Super_admin)
+      description: Login qilgan admin o'zi qo'shgan barcha mashinalarni ko'rish
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Mening mashinalarim ro'yxati
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: number
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Car'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Faqat admin va super_admin ruxsat etilgan
   
   /car/by-category/{categoryId}:
     get:
