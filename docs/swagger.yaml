@@ -439,7 +439,7 @@ paths:
     post:
       tags:
         - Category
-      summary: Yangi category yaratish (Admin only)
+      summary: Yangi category yaratish (Admin va Super_admin)
       security:
         - cookieAuth: []
       requestBody:
@@ -507,7 +507,7 @@ paths:
     put:
       tags:
         - Category
-      summary: Categoryni yangilash (Admin only)
+      summary: Categoryni yangilash (Faqat Super_admin)
       security:
         - cookieAuth: []
       parameters:
@@ -533,13 +533,15 @@ paths:
           description: Category muvaffaqiyatli yangilandi
         '401':
           description: Unauthorized
+        '403':
+          description: Faqat super_admin ruxsat etilgan
         '404':
           description: Category topilmadi
     
     delete:
       tags:
         - Category
-      summary: Categoryni o'chirish - Cascade delete (Admin only)
+      summary: Categoryni o'chirish - Cascade delete (Faqat Super_admin)
       description: Category o'chirilganda unga tegishli barcha mashinalar ham o'chiriladi
       security:
         - cookieAuth: []
@@ -563,6 +565,8 @@ paths:
                     type: number
         '401':
           description: Unauthorized
+        '403':
+          description: Faqat super_admin ruxsat etilgan
         '404':
           description: Category topilmadi
   
